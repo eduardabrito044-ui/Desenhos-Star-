@@ -2,107 +2,119 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Studio de Desenho Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Studio de Desenho - Salvar no Celular</title>
     <style>
         :root {
             --primary-blue: #007bff;
             --dark-blue: #0056b3;
             --bg-white: #ffffff;
-            --light-gray: #f8f9fa;
+            --light-gray: #f1f3f5;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             display: flex;
             flex-direction: column;
             height: 100vh;
             background-color: var(--light-gray);
             overflow: hidden;
+            touch-action: none; /* Impede zoom acidental ao desenhar */
         }
 
         /* Barra de Ferramentas */
         .toolbar {
             background-color: var(--primary-blue);
             color: white;
-            padding: 10px 20px;
+            padding: 10px;
             display: flex;
             align-items: center;
-            gap: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 10;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 100;
         }
 
         .tool-group {
             display: flex;
             align-items: center;
-            gap: 10px;
-            border-right: 1px solid rgba(255,255,255,0.3);
-            padding-right: 15px;
+            gap: 5px;
         }
 
-        label { font-weight: bold; font-size: 14px; }
-
-        input[type="color"], input[type="range"] {
-            cursor: pointer;
-        }
-
-        button {
-            background-color: white;
-            color: var(--primary-blue);
+        select, button {
+            padding: 8px 12px;
+            border-radius: 6px;
             border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
             font-weight: bold;
-            transition: 0.3s;
+            font-size: 14px;
+            cursor: pointer;
         }
 
-        button:hover {
-            background-color: #e2e2e2;
-        }
+        button { background-color: white; color: var(--primary-blue); }
+        button.active { background-color: var(--dark-blue); color: white; border: 1px solid white; }
 
-        button.active {
-            background-color: var(--dark-blue);
-            color: white;
-        }
+        .btn-save { background-color: #28a745 !important; color: white !important; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .btn-clear { background-color: #dc3545 !important; color: white !important; }
 
-        /* Área de Desenho */
-        #canvas-container {
+        /* Área do Canvas */
+        #canvas-wrapper {
             flex-grow: 1;
+            position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
-            cursor: crosshair;
+            background: #d1d1d1;
+            padding: 10px;
         }
 
-        canvas {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.15);
+        .layer-container {
+            position: relative;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
             max-width: 100%;
             max-height: 100%;
         }
 
-        .btn-save { background-color: #28a745; color: white; }
-        .btn-clear { background-color: #dc3545; color: white; }
+        #gridCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
 
+        #drawingCanvas {
+            position: relative;
+            z-index: 2;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        #status-bar {
+            background: var(--dark-blue);
+            color: white;
+            font-size: 11px;
+            padding: 5px 15px;
+            display: flex;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body>
 
     <div class="toolbar">
         <div class="tool-group">
-            <label>Cor:</label>
-            <input type="color" id="colorPicker" value="#000000">
+            <select id="sheetType">
+                <option value="none">Folha Branca</option>
+                <option value="grid">Quadriculado</option>
+                <option value="millimetric">Milimetrado</option>
+            </select>
         </div>
 
         <div class="tool-group">
-            <label>Espessura:</label>
-            <input type="range" id="lineWidth" min="1" max="50" value="5">
-            <span id="sizeDisplay">5px</span>
+            <input type="color" id="colorPicker" value="#000000" style="width:35px; height:35px;">
+            <input type="range" id="lineWidth" min="1" max="40" value="4">
         </div>
 
         <div class="tool-group">
@@ -110,109 +122,167 @@
             <button id="eraserBtn">Borracha</button>
         </div>
 
-        <div class="tool-group" style="border: none;">
-            <button class="btn-clear" id="clearBtn">Limpar Tudo</button>
-            <button class="btn-save" id="saveBtn">Salvar Desenho</button>
+        <div class="tool-group">
+            <button onclick="clearCanvas()" class="btn-clear">Limpar</button>
+            <button onclick="saveImage()" class="btn-save">SALVAR NO CELULAR</button>
         </div>
     </div>
 
-    <div id="canvas-container">
-        <canvas id="paintCanvas"></canvas>
+    <div id="canvas-wrapper">
+        <div class="layer-container">
+            <canvas id="gridCanvas"></canvas>
+            <canvas id="drawingCanvas"></canvas>
+        </div>
+    </div>
+
+    <div id="status-bar">
+        <span id="coordDisplay">Toque para desenhar</span>
+        <span>Desenho Técnico v3.0</span>
     </div>
 
     <script>
-        const canvas = document.getElementById('paintCanvas');
-        const ctx = canvas.getContext('2d');
-        const colorPicker = document.getElementById('colorPicker');
-        const lineWidth = document.getElementById('lineWidth');
-        const sizeDisplay = document.getElementById('sizeDisplay');
-        const clearBtn = document.getElementById('clearBtn');
-        const saveBtn = document.getElementById('saveBtn');
-        const penBtn = document.getElementById('penBtn');
-        const eraserBtn = document.getElementById('eraserBtn');
+        const dCanvas = document.getElementById('drawingCanvas');
+        const gCanvas = document.getElementById('gridCanvas');
+        const dCtx = dCanvas.getContext('2d');
+        const gCtx = gCanvas.getContext('2d');
+        const coordDisplay = document.getElementById('coordDisplay');
+        const sheetType = document.getElementById('sheetType');
 
         let painting = false;
         let isEraser = false;
+        const touchOffsetY = -40; // O traço fica 40px acima do dedo
 
-        // Ajustar tamanho do canvas
-        function resizeCanvas() {
-            canvas.width = window.innerWidth * 0.9;
-            canvas.height = window.innerHeight * 0.75;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+        function init() {
+            // Define um tamanho bom para celular e PC
+            const width = window.innerWidth > 800 ? 1000 : window.innerWidth * 0.95;
+            const height = window.innerHeight * 0.7;
+            
+            dCanvas.width = gCanvas.width = width;
+            dCanvas.height = gCanvas.height = height;
+            
+            dCtx.lineCap = 'round';
+            dCtx.lineJoin = 'round';
+            updateGrid();
         }
 
-        window.addEventListener('load', resizeCanvas);
-        window.addEventListener('resize', resizeCanvas);
+        function updateGrid() {
+            gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height);
+            gCtx.fillStyle = "white";
+            gCtx.fillRect(0, 0, gCanvas.width, gCanvas.height);
 
-        // Lógica de Desenho
-        function startPosition(e) {
+            const type = sheetType.value;
+            if (type === 'none') return;
+
+            gCtx.beginPath();
+            let step = type === 'grid' ? 30 : 10;
+            gCtx.strokeStyle = type === 'grid' ? "#d1d1d1" : "#f0c0c0";
+            gCtx.lineWidth = 0.5;
+
+            for (let x = 0; x <= gCanvas.width; x += step) {
+                gCtx.moveTo(x, 0); gCtx.lineTo(x, gCanvas.height);
+            }
+            for (let y = 0; y <= gCanvas.height; y += step) {
+                gCtx.moveTo(0, y); gCtx.lineTo(gCanvas.width, y);
+            }
+            gCtx.stroke();
+        }
+
+        function getPos(e) {
+            const rect = dCanvas.getBoundingClientRect();
+            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            let x = clientX - rect.left;
+            let y = clientY - rect.top;
+            
+            // Offset apenas para touch
+            if (e.touches) y += touchOffsetY; 
+            
+            return { x, y };
+        }
+
+        function start(e) {
             painting = true;
             draw(e);
         }
 
-        function finishedPosition() {
+        function stop() {
             painting = false;
-            ctx.beginPath();
+            dCtx.beginPath();
         }
 
         function draw(e) {
             if (!painting) return;
+            const pos = getPos(e);
+            
+            coordDisplay.innerText = `Posição - X: ${Math.round(pos.x)} Y: ${Math.round(pos.y)}`;
 
-            // Suporte para Mouse e Touch
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX || e.touches[0].clientX) - rect.left;
-            const y = (e.clientY || e.touches[0].clientY) - rect.top;
+            dCtx.lineWidth = document.getElementById('lineWidth').value;
+            dCtx.strokeStyle = isEraser ? "white" : document.getElementById('colorPicker').value;
 
-            ctx.lineWidth = lineWidth.value;
-            ctx.strokeStyle = isEraser ? '#ffffff' : colorPicker.value;
-
-            ctx.lineTo(x, y);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x, y);
+            dCtx.lineTo(pos.x, pos.y);
+            dCtx.stroke();
+            dCtx.beginPath();
+            dCtx.moveTo(pos.x, pos.y);
         }
 
         // Eventos
-        canvas.addEventListener('mousedown', startPosition);
-        canvas.addEventListener('mouseup', finishedPosition);
-        canvas.addEventListener('mousemove', draw);
+        dCanvas.addEventListener('mousedown', start);
+        window.addEventListener('mouseup', stop);
+        dCanvas.addEventListener('mousemove', draw);
         
-        // Touch para Celular/Tablet
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startPosition(e); });
-        canvas.addEventListener('touchend', finishedPosition);
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+        dCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); });
+        dCanvas.addEventListener('touchend', (e) => { e.preventDefault(); stop(); });
+        dCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
 
-        // Controles
-        lineWidth.addEventListener('input', () => {
-            sizeDisplay.innerText = lineWidth.value + 'px';
-        });
+        sheetType.addEventListener('change', updateGrid);
 
-        penBtn.addEventListener('click', () => {
+        document.getElementById('penBtn').onclick = function() {
             isEraser = false;
-            penBtn.classList.add('active');
-            eraserBtn.classList.remove('active');
-        });
+            this.classList.add('active');
+            document.getElementById('eraserBtn').classList.remove('active');
+        };
 
-        eraserBtn.addEventListener('click', () => {
+        document.getElementById('eraserBtn').onclick = function() {
             isEraser = true;
-            eraserBtn.classList.add('active');
-            penBtn.classList.remove('active');
-        });
+            this.classList.add('active');
+            document.getElementById('penBtn').classList.remove('active');
+        };
 
-        clearBtn.addEventListener('click', () => {
-            if(confirm("Deseja apagar todo o desenho?")) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-        });
+        function clearCanvas() {
+            if (confirm("Apagar tudo?")) dCtx.clearRect(0, 0, dCanvas.width, dCanvas.height);
+        }
 
-        saveBtn.addEventListener('click', () => {
+        // FUNÇÃO PARA SALVAR NO DISPOSITIVO
+        function saveImage() {
+            // Criamos um canvas invisível para fundir o fundo (grid) com o desenho
+            const saveCanvas = document.createElement('canvas');
+            saveCanvas.width = dCanvas.width;
+            saveCanvas.height = dCanvas.height;
+            const sCtx = saveCanvas.getContext('2d');
+            
+            // 1. Desenha o fundo e o grid
+            sCtx.drawImage(gCanvas, 0, 0);
+            // 2. Desenha a sua arte por cima
+            sCtx.drawImage(dCanvas, 0, 0);
+            
+            // Transforma em imagem
+            const imageURI = saveCanvas.toDataURL("image/png");
+            
+            // Cria um link temporário para download
             const link = document.createElement('a');
-            link.download = 'meu-desenho.png';
-            link.href = canvas.toDataURL();
+            link.download = 'meu-desenho-celular.png';
+            link.href = imageURI;
+            
+            // Adiciona ao corpo da página, clica e remove (necessário para alguns celulares)
+            document.body.appendChild(link);
             link.click();
-        });
+            document.body.removeChild(link);
+            
+            alert("Seu desenho foi enviado para a pasta de Downloads!");
+        }
 
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
