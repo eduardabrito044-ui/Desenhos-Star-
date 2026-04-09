@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Studio de Desenho - Salvar no Celular</title>
+    <title>Studio de Desenho Estelar</title>
     <style>
         :root {
-            --primary-blue: #007bff;
-            --dark-blue: #0056b3;
+            --primary-blue: #007bff; /* Azul vibrante */
+            --dark-blue: #003d80; /* Azul escuro para contraste */
+            --star-gold: #ffeb3b; /* Amarelo ouro para as estrelas ativas */
             --bg-white: #ffffff;
             --light-gray: #f1f3f5;
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             display: flex;
             flex-direction: column;
             height: 100vh;
             background-color: var(--light-gray);
             overflow: hidden;
-            touch-action: none; /* Impede zoom acidental ao desenhar */
+            touch-action: none; /* Impede zoom acidental */
         }
 
-        /* Barra de Ferramentas */
+        /* Barra de Ferramentas Estelar */
         .toolbar {
             background-color: var(--primary-blue);
             color: white;
@@ -33,30 +34,77 @@
             justify-content: space-around;
             flex-wrap: wrap;
             gap: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             z-index: 100;
         }
 
         .tool-group {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
         }
 
         select, button {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: none;
+            padding: 10px 15px;
+            border-radius: 20px; /* Bordas arredondadas */
+            border: 2px solid white;
             font-weight: bold;
             font-size: 14px;
             cursor: pointer;
+            transition: all 0.2s ease;
         }
 
-        button { background-color: white; color: var(--primary-blue); }
-        button.active { background-color: var(--dark-blue); color: white; border: 1px solid white; }
+        /* Estilo Base para Botões */
+        button { 
+            background-color: white; 
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-        .btn-save { background-color: #28a745 !important; color: white !important; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .btn-clear { background-color: #dc3545 !important; color: white !important; }
+        /* Estilo para Botões Ativos (com Estrela) */
+        button.active { 
+            background-color: var(--dark-blue); 
+            color: var(--star-gold); /* Estrela amarela quando ativa */
+            border-color: var(--star-gold);
+        }
+
+        /* Botão Salvar Estelar */
+        .btn-save { 
+            background-color: var(--star-gold) !important; 
+            color: var(--dark-blue) !important; 
+            border-color: var(--dark-blue) !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2); 
+        }
+        .btn-save.active { background-color: var(--dark-blue) !important; color: var(--star-gold) !important; }
+
+        /* Botão Limpar Estelar */
+        .btn-clear { 
+            background-color: #ff4d4d !important; 
+            color: white !important; 
+            border-color: white !important;
+        }
+
+        /* Inputs Estilizados */
+        input[type="color"] { 
+            width: 40px; 
+            height: 40px; 
+            border: 2px solid white; 
+            border-radius: 50%; 
+            background: none; 
+            cursor: pointer; 
+        }
+
+        input[type="range"] { 
+            cursor: pointer; 
+            accent-color: white; /* Cor da bolinha no Chrome/Edge */
+        }
+
+        /* Ícone de Estrela */
+        .star-icon {
+            font-size: 1.2em;
+        }
 
         /* Área do Canvas */
         #canvas-wrapper {
@@ -65,23 +113,25 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #d1d1d1;
+            background: #d1d1d1; /* Fundo da "mesa" */
             padding: 10px;
         }
 
         .layer-container {
             position: relative;
             background: white;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            box-shadow: 0 4px 25px rgba(0,0,0,0.5);
             max-width: 100%;
             max-height: 100%;
+            border-radius: 8px;
+            overflow: hidden; /* Garante que o grid não saia */
         }
 
         #gridCanvas {
             position: absolute;
             top: 0; left: 0;
             z-index: 1;
-            pointer-events: none;
+            pointer-events: none; /* Não interfere no clique */
         }
 
         #drawingCanvas {
@@ -91,6 +141,7 @@
             touch-action: none;
         }
 
+        /* Barra de Status */
         #status-bar {
             background: var(--dark-blue);
             color: white;
@@ -113,18 +164,26 @@
         </div>
 
         <div class="tool-group">
-            <input type="color" id="colorPicker" value="#000000" style="width:35px; height:35px;">
-            <input type="range" id="lineWidth" min="1" max="40" value="4">
+            <input type="color" id="colorPicker" value="#000000">
+            <input type="range" id="lineWidth" min="1" max="50" value="5">
         </div>
 
         <div class="tool-group">
-            <button id="penBtn" class="active">Caneta</button>
-            <button id="eraserBtn">Borracha</button>
+            <button id="penBtn" class="active">
+                <span class="star-icon">&#9733;</span> Caneta
+            </button>
+            <button id="eraserBtn">
+                <span class="star-icon">&#9733;</span> Borracha
+            </button>
         </div>
 
         <div class="tool-group">
-            <button onclick="clearCanvas()" class="btn-clear">Limpar</button>
-            <button onclick="saveImage()" class="btn-save">SALVAR NO CELULAR</button>
+            <button onclick="clearCanvas()" class="btn-clear">
+                <span class="star-icon">&#9733;</span> Limpar
+            </button>
+            <button onclick="saveImage()" class="btn-save">
+                <span class="star-icon">&#9733;</span> SALVAR NO CELULAR
+            </button>
         </div>
     </div>
 
@@ -136,8 +195,8 @@
     </div>
 
     <div id="status-bar">
-        <span id="coordDisplay">Toque para desenhar</span>
-        <span>Desenho Técnico v3.0</span>
+        <span id="coordDisplay">Toque na estrela para começar</span>
+        <span>Studio de Desenho Estelar v4.0</span>
     </div>
 
     <script>
@@ -150,7 +209,9 @@
 
         let painting = false;
         let isEraser = false;
-        const touchOffsetY = -40; // O traço fica 40px acima do dedo
+        
+        // PRECISÃO 1:1 - O traço fica EXATAMENTE no lugar do toque.
+        const touchOffsetY = 0; 
 
         function init() {
             // Define um tamanho bom para celular e PC
@@ -167,7 +228,7 @@
 
         function updateGrid() {
             gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height);
-            gCtx.fillStyle = "white";
+            gCtx.fillStyle = "white"; // A folha permanece branca
             gCtx.fillRect(0, 0, gCanvas.width, gCanvas.height);
 
             const type = sheetType.value;
@@ -175,7 +236,7 @@
 
             gCtx.beginPath();
             let step = type === 'grid' ? 30 : 10;
-            gCtx.strokeStyle = type === 'grid' ? "#d1d1d1" : "#f0c0c0";
+            gCtx.strokeStyle = type === 'grid' ? "#d1d1d1" : "#f0c0c0"; // Cores sutis para o grid
             gCtx.lineWidth = 0.5;
 
             for (let x = 0; x <= gCanvas.width; x += step) {
@@ -192,10 +253,14 @@
             let clientX = e.clientX || (e.touches && e.touches[0].clientX);
             let clientY = e.clientY || (e.touches && e.touches[0].clientY);
             
-            let x = clientX - rect.left;
-            let y = clientY - rect.top;
+            // Corrige a posição considerando o scroll e o zoom
+            const scaleX = dCanvas.width / rect.width;
+            const scaleY = dCanvas.height / rect.height;
+
+            let x = (clientX - rect.left) * scaleX;
+            let y = (clientY - rect.top) * scaleY;
             
-            // Offset apenas para touch
+            // Offset para touch (agora é 0, traço no dedo)
             if (e.touches) y += touchOffsetY; 
             
             return { x, y };
@@ -203,12 +268,13 @@
 
         function start(e) {
             painting = true;
-            draw(e);
+            // Desenha um ponto no clique/toque inicial para precisão
+            draw(e); 
         }
 
         function stop() {
             painting = false;
-            dCtx.beginPath();
+            dCtx.beginPath(); // Recomeça o caminho para evitar linhas fantasmas
         }
 
         function draw(e) {
@@ -218,25 +284,29 @@
             coordDisplay.innerText = `Posição - X: ${Math.round(pos.x)} Y: ${Math.round(pos.y)}`;
 
             dCtx.lineWidth = document.getElementById('lineWidth').value;
+            // Cor da caneta ou branco para a borracha
             dCtx.strokeStyle = isEraser ? "white" : document.getElementById('colorPicker').value;
 
+            // Cria a linha
             dCtx.lineTo(pos.x, pos.y);
             dCtx.stroke();
             dCtx.beginPath();
             dCtx.moveTo(pos.x, pos.y);
         }
 
-        // Eventos
+        // Eventos de Mouse e Touch unificados
         dCanvas.addEventListener('mousedown', start);
         window.addEventListener('mouseup', stop);
         dCanvas.addEventListener('mousemove', draw);
         
+        // preventDefault() impede o scroll da página enquanto desenha
         dCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e); });
         dCanvas.addEventListener('touchend', (e) => { e.preventDefault(); stop(); });
         dCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
 
         sheetType.addEventListener('change', updateGrid);
 
+        // Controles de Ferramentas
         document.getElementById('penBtn').onclick = function() {
             isEraser = false;
             this.classList.add('active');
@@ -250,12 +320,12 @@
         };
 
         function clearCanvas() {
-            if (confirm("Apagar tudo?")) dCtx.clearRect(0, 0, dCanvas.width, dCanvas.height);
+            if (confirm("Deseja apagar todo o desenho estelar?")) dCtx.clearRect(0, 0, dCanvas.width, dCanvas.height);
         }
 
-        // FUNÇÃO PARA SALVAR NO DISPOSITIVO
+        // Função para Salvar a Arte
         function saveImage() {
-            // Criamos um canvas invisível para fundir o fundo (grid) com o desenho
+            // Cria um canvas temporário para fundir o desenho com o grid
             const saveCanvas = document.createElement('canvas');
             saveCanvas.width = dCanvas.width;
             saveCanvas.height = dCanvas.height;
@@ -263,23 +333,21 @@
             
             // 1. Desenha o fundo e o grid
             sCtx.drawImage(gCanvas, 0, 0);
-            // 2. Desenha a sua arte por cima
+            // 2. Desenha a arte por cima
             sCtx.drawImage(dCanvas, 0, 0);
             
-            // Transforma em imagem
+            // Converte para imagem e inicia o download
             const imageURI = saveCanvas.toDataURL("image/png");
             
-            // Cria um link temporário para download
             const link = document.createElement('a');
-            link.download = 'meu-desenho-celular.png';
+            link.download = 'meu-desenho-estelar.png';
             link.href = imageURI;
             
-            // Adiciona ao corpo da página, clica e remove (necessário para alguns celulares)
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             
-            alert("Seu desenho foi enviado para a pasta de Downloads!");
+            alert("Sua obra de arte estelar foi salva na pasta de Downloads!");
         }
 
         window.addEventListener('load', init);
